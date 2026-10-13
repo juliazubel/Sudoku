@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sudoku</title>
+  <meta name="description" content="A clean, fast Sudoku game in your browser — four difficulty levels, daily challenge, notes, hints, undo, statistics, dark mode and a built-in solver. Works offline.">
+  <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e131a" media="(prefers-color-scheme: dark)">
+
+  <!-- Social preview -->
+  <meta property="og:title" content="Sudoku">
+  <meta property="og:description" content="Play Sudoku in your browser — daily challenge, notes, hints, dark mode and a built-in solver.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/og-image.png">
+
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Apply the saved theme before first paint (avoids a flash of the wrong theme). -->
+  <script>
+    try {
+      var s = JSON.parse(localStorage.getItem('sudoku.settings.v1') || '{}');
+      if (s.theme === 'light' || s.theme === 'dark') document.documentElement.dataset.theme = s.theme;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+      <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+      <symbol id="i-erase" viewBox="0 0 24 24"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L12 20"/><path d="M22 21H7"/><path d="m5 11 9 9"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.2 6.8a2.8 2.8 0 0 0-4-4L3.8 16.2a2 2 0 0 0-.5.9l-1.3 4.4a.5.5 0 0 0 .6.6l4.4-1.3a2 2 0 0 0 .9-.5z"/><path d="m15 5 4 4"/></symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M8 17v-4M13 17V9M18 17V5"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+      <symbol id="i-wand" viewBox="0 0 24 24"><path d="m21.6 2.4-1.2-1.2a1.2 1.2 0 0 0-1.7 0L2.4 18.7a1.2 1.2 0 0 0 0 1.7l1.2 1.2a1.2 1.2 0 0 0 1.7 0L21.6 4.1a1.2 1.2 0 0 0 0-1.7z"/><path d="m14 7 3 3M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1.5" y="1.5" width="29" height="29" rx="8" class="logo-bg"/>
+          <path d="M11.5 6v20M20.5 6v20M6 11.5h20M6 20.5h20" class="logo-grid"/>
+          <rect x="11.5" y="11.5" width="9" height="9" rx="1.5" class="logo-accent"/>
+        </svg>
+        <div>
+          <h1>Sudoku</h1>
+          <p class="tagline" data-i18n="app.tagline">Classic number puzzle</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="btn-help" data-i18n-title="help.title"><svg><use href="#i-help"/></svg></button>
+        <button class="icon-btn" id="btn-stats" data-i18n-title="stats.title"><svg><use href="#i-chart"/></svg></button>
+        <button class="icon-btn" id="btn-settings" data-i18n-title="settings.title"><svg><use href="#i-gear"/></svg></button>
+        <button class="icon-btn" id="btn-theme" data-i18n-title="theme.toggle"><svg><use href="#i-moon"/></svg></button>
+        <button class="icon-btn lang-btn" id="btn-lang" data-i18n-title="lang.toggle">PL</button>
+      </div>
+    </header>
+
+    <nav class="modes" aria-label="Game mode">
+      <div class="segmented" role="group">
+        <button class="seg" data-mode="easy" data-i18n="mode.easy">Easy</button>
+        <button class="seg" data-mode="medium" data-i18n="mode.medium">Medium</button>
+        <button class="seg" data-mode="hard" data-i18n="mode.hard">Hard</button>
+        <button class="seg" data-mode="expert" data-i18n="mode.expert">Expert</button>
+      </div>
+      <div class="segmented segmented--extra" role="group">
+        <button class="seg" data-mode="daily"><svg><use href="#i-calendar"/></svg><span data-i18n="mode.daily">Daily</span><span class="daily-check" hidden><svg><use href="#i-check"/></svg></span></button>
+        <button class="seg" data-mode="create"><svg><use href="#i-wand"/></svg><span data-i18n="mode.create">Create</span></button>
+      </div>
+    </nav>
+
+    <main class="layout">
+      <section class="board-area">
+        <div class="infobar">
+          <span class="mode-label" id="mode-label">Medium</span>
+          <span class="info-item" id="info-mistakes"><span data-i18n="info.mistakes">Mistakes</span>: <b id="mistakes">0</b><span id="mistakes-limit"></span></span>
+          <span class="timer-wrap" id="timer-wrap">
+            <span class="timer" id="timer">00:00</span>
+            <button class="icon-btn icon-btn--sm" id="btn-pause" data-i18n-title="action.pause"><svg><use href="#i-pause"/></svg></button>
+          </span>
+        </div>
+
+        <div class="board-wrap">
+          <div class="board" id="board" role="grid" aria-label="Sudoku board"></div>
+          <div class="pause-overlay" id="pause-overlay" hidden>
+            <button class="play-big" id="btn-resume" data-i18n-title="action.resume"><svg><use href="#i-play"/></svg></button>
+            <strong data-i18n="paused.title">Paused</strong>
+            <span data-i18n="paused.text">Take a breather. The clock is stopped.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="create-panel" id="create-panel" hidden>
+          <h2 data-i18n="create.title">Create or solve your own puzzle</h2>
+          <p class="muted" data-i18n="create.help"></p>
+          <p class="create-status" id="create-status" role="status"></p>
+        </div>
+
+        <div class="actions" id="actions">
+          <button class="action" id="btn-undo"><span class="action-icon"><svg><use href="#i-undo"/></svg></span><span data-i18n="action.undo">Undo</span></button>
+          <button class="action" id="btn-erase"><span class="action-icon"><svg><use href="#i-erase"/></svg></span><span data-i18n="action.erase">Erase</span></button>
+          <button class="action" id="btn-notes" aria-pressed="false"><span class="action-icon"><svg><use href="#i-pencil"/></svg><span class="badge" id="notes-badge">Off</span></span><span data-i18n="action.notes">Notes</span></button>
+          <button class="action" id="btn-hint"><span class="action-icon"><svg><use href="#i-bulb"/></svg><span class="badge badge--count" id="hint-badge" hidden>0</span></span><span data-i18n="action.hint">Hint</span></button>
+        </div>
+
+        <div class="numpad" id="numpad"></div>
+
+        <div class="panel-buttons" id="game-buttons">
+          <button class="btn btn--primary" id="btn-new"><svg><use href="#i-plus"/></svg><span data-i18n="action.newGame">New game</span></button>
+          <button class="btn" id="btn-restart"><svg><use href="#i-restart"/></svg><span data-i18n="action.restart">Restart</span></button>
+        </div>
+
+        <div class="panel-buttons" id="create-buttons" hidden>
+          <button class="btn btn--primary" id="btn-play-custom"><svg><use href="#i-play"/></svg><span data-i18n="create.play">Play this puzzle</span></button>
+          <button class="btn" id="btn-solve"><svg><use href="#i-wand"/></svg><span data-i18n="create.solve">Solve</span></button>
+          <button class="btn" id="btn-clear"><svg><use href="#i-x"/></svg><span data-i18n="create.clear">Clear</span></button>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span data-i18n="footer.text">Made with plain HTML, CSS &amp; JavaScript</span>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/juliazubel" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+  </div>
+
+  <!-- ===== Dialogs ===== -->
+  <dialog class="modal" id="dlg-win">
+    <div class="modal-body center">
+      <div class="win-icon"><svg><use href="#i-trophy"/></svg></div>
+      <h2 data-i18n="win.title">Solved!</h2>
+      <p class="muted" data-i18n="win.text">Nicely done.</p>
+      <div class="win-stats">
+        <div><span data-i18n="win.time">Time</span><b id="win-time">00:00</b></div>
+        <div><span data-i18n="win.mistakes">Mistakes</span><b id="win-mistakes">0</b></div>
+        <div><span data-i18n="win.hints">Hints</span><b id="win-hints">0</b></div>
+      </div>
+      <p class="record" id="win-record" hidden data-i18n="win.record">New best time!</p>
+      <p class="muted small" id="win-daily" hidden data-i18n="win.dailyDone"></p>
+      <div class="modal-actions">
+        <button class="btn btn--primary" id="win-new"><svg><use href="#i-plus"/></svg><span data-i18n="action.newGame">New game</span></button>
+      </div>
+    </div>
+    <!-- Confetti lives inside the dialog so it renders above the backdrop. -->
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+  </dialog>
+
+  <dialog class="modal" id="dlg-lost">
+    <div class="modal-body center">
+      <h2 data-i18n="lost.title">Out of mistakes</h2>
+      <p class="muted" data-i18n="lost.text"></p>
+      <div class="modal-actions">
+        <button class="btn" id="lost-retry"><svg><use href="#i-restart"/></svg><span data-i18n="lost.retry">Try again</span></button>
+        <button class="btn btn--primary" id="lost-new"><svg><use href="#i-plus"/></svg><span data-i18n="action.newGame">New game</span></button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="dlg-confirm">
+    <div class="modal-body center">
+      <h2 id="confirm-title"></h2>
+      <p class="muted" id="confirm-text"></p>
+      <div class="modal-actions">
+        <button class="btn" value="cancel" id="confirm-cancel" data-i18n="confirm.cancel">Cancel</button>
+        <button class="btn btn--primary" id="confirm-ok" data-i18n="confirm.ok">Yes, continue</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="dlg-stats">
+    <div class="modal-head">
+      <h2 data-i18n="stats.title">Statistics</h2>
+      <button class="icon-btn" data-close data-i18n-title="confirm.cancel"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-summary" id="stats-summary"></div>
+      <div class="table-wrap"><table class="stats-table" id="stats-table"></table></div>
+      <button class="link-btn" id="stats-reset" data-i18n="stats.reset">Reset statistics</button>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="dlg-settings">
+    <div class="modal-head">
+      <h2 data-i18n="settings.title">Settings</h2>
+      <button class="icon-btn" data-close data-i18n-title="confirm.cancel"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body settings">
+      <label class="setting"><span><b data-i18n="settings.mistakes"></b><small data-i18n="settings.mistakesHint"></small></span><input type="checkbox" class="switch" data-setting="showMistakes"></label>
+      <label class="setting"><span><b data-i18n="settings.limit"></b><small data-i18n="settings.limitHint"></small></span><input type="checkbox" class="switch" data-setting="mistakeLimit"></label>
+      <label class="setting"><span><b data-i18n="settings.area"></b></span><input type="checkbox" class="switch" data-setting="highlightArea"></label>
+      <label class="setting"><span><b data-i18n="settings.same"></b></span><input type="checkbox" class="switch" data-setting="highlightSame"></label>
+      <label class="setting"><span><b data-i18n="settings.autoNotes"></b><small data-i18n="settings.autoNotesHint"></small></span><input type="checkbox" class="switch" data-setting="autoNotes"></label>
+      <label class="setting"><span><b data-i18n="settings.timer"></b></span><input type="checkbox" class="switch" data-setting="showTimer"></label>
+      <div class="setting">
+        <span><b data-i18n="settings.theme"></b></span>
+        <div class="segmented segmented--sm" id="theme-choice">
+          <button class="seg" data-theme-choice="auto" data-i18n="settings.themeAuto">Auto</button>
+          <button class="seg" data-theme-choice="light" data-i18n="settings.themeLight">Light</button>
+          <button class="seg" data-theme-choice="dark" data-i18n="settings.themeDark">Dark</button>
+        </div>
+      </div>
+      <div class="setting">
+        <span><b data-i18n="settings.language"></b></span>
+        <div class="segmented segmented--sm" id="lang-choice">
+          <button class="seg" data-lang-choice="en">English</button>
+          <button class="seg" data-lang-choice="pl">Polski</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="dlg-help">
+    <div class="modal-head">
+      <h2 data-i18n="help.title">How to play</h2>
+      <button class="icon-btn" data-close data-i18n-title="confirm.cancel"><svg><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p data-i18n="help.rules"></p>
+      <h3 data-i18n="help.controls">Controls</h3>
+      <ul class="keys">
+        <li><span><kbd>1</kbd>–<kbd>9</kbd></span><span data-i18n="help.k.digits"></span></li>
+        <li><span><kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>9</kbd></span><span data-i18n="help.k.shift"></span></li>
+        <li><span><kbd>Backspace</kbd> <kbd>0</kbd></span><span data-i18n="help.k.erase"></span></li>
+        <li><span><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd></span><span data-i18n="help.k.move"></span></li>
+        <li><span><kbd>N</kbd></span><span data-i18n="help.k.notes"></span></li>
+        <li><span><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></span><span data-i18n="help.k.undo"></span></li>
+        <li><span><kbd>H</kbd></span><span data-i18n="help.k.hint"></span></li>
+        <li><span><kbd>P</kbd></span><span data-i18n="help.k.pause"></span></li>
+      </ul>
+      <p class="muted small" data-i18n="help.tips"></p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/sudoku.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
